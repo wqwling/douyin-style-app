@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短视频应用 - 支持发布</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        #app {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+        
+        .video-item {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            transition: transform 0.3s ease;
+        }
+        
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .video-info {
+            position: absolute;
+            bottom: 80px;
+            left: 16px;
+            right: 16px;
+            z-index: 10;
+        }
+        
+        .video-description {
+            margin-bottom: 16px;
+            font-size: 16px;
+            line-height: 1.4;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+        
+        .music-info {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .music-icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        
+        .action-buttons {
+            position: absolute;
+            right: 16px;
+            bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .action-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        
+        .action-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .action-count {
+            font-size: 12px;
+        }
+        
+        .like.active {
+            color: #fe2c55;
+        }
+        
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 20;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .home.active {
+            color: #fe2c55;
+        }
+        
+        .progress-bar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 15;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: #fff;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        
+        .play-pause {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+        
+        .play-pause-icon {
+            font-size: 40px;
+        }
+        
+        /* 发布页面样式 */
+        .publish-page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .publish-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .publish-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .publish-close, .publish-submit {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .publish-submit {
+            color: #fe2c55;
+            font-weight: bold;
+        }
+        
+        .publish-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .video-upload-area {
+            width: 100%;
+            height: 300px;
+            border: 2px dashed #555;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .video-upload-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+        
+        .video-upload-text {
+            font-size: 16px;
+            color: #aaa;
+        }
+        
+        .video-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+        
+        .publish-form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+            color: #aaa;
+        }
+        
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+        }
+        
+        .form-textarea {
+            height: 100px;
+            resize: none;
+        }
+        
+        .upload-progress {
+            width: 100%;
+            height: 5px;
+            background: #333;
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #fe2c55;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div class="video-container" id="videoContainer">
+            <!-- 视频将通过JS动态添加 -->
+        </div>
+        
+        <div class="play-pause" id="playPause">
+            <div class="play-pause-icon">⏸️</div>
+        </div>
+        
+        <div class="bottom-nav">
+            <div class="nav-item home active">
+                <div class="nav-icon">🏠</div>
+                <div>首页</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">🔍</div>
+                <div>发现</div>
+            </div>
+            <div class="nav-item" id="publishBtn">
+                <div class="nav-icon">+</div>
+                <div>发布</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">💬</div>
+                <div>消息</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">👤</div>
+                <div>我</div>
+            </div>
+        </div>
+        
+        <!-- 发布页面 -->
+        <div class="publish-page" id="publishPage">
+            <div class="publish-header">
+                <button class="publish-close" id="publishClose">取消</button>
+                <div class="publish-title">发布视频</div>
+                <button class="publish-submit" id="publishSubmit">发布</button>
+            </div>
+            
+            <div class="publish-content">
+                <div class="video-upload-area" id="videoUploadArea">
+                    <div class="video-upload-icon">📹</div>
+                    <div class="video-upload-text">点击选择视频文件</div>
+                    <video class="video-preview" id="videoPreview" controls></video>
+                    <input type="file" id="videoFileInput" accept="video/*" style="display: none;">
+                    <div class="upload-progress" id="uploadProgress">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+                
+                <div class="publish-form">
+                    <div class="form-group">
+                        <label class="form-label" for="videoDescription">视频描述</label>
+                        <textarea class="form-textarea" id="videoDescription" placeholder="添加视频描述..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="videoMusic">选择音乐</label>
+                        <select class="form-select" id="videoMusic">
+                            <option value="原声 - 用户创作">原声 - 用户创作</option>
+                            <option value="流行音乐 - 热门歌曲">流行音乐 - 热门歌曲</option>
+                            <option value="轻音乐 - 宁静时光">轻音乐 - 宁静时光</option>
+                            <option value="电子音乐 - 动感节奏">电子音乐 - 动感节奏</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="toast" id="toast">发布成功！</div>
+    </div>
+
+    <script>
+        // 使用更可靠的视频源
+        const videos = [
+            {
+                id: 1,
+                src: 'https://assets.codepen.io/3364143/710.mp4',
+                poster: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+                description: '美丽的自然风光 #旅行 #自然',
+                music: '轻音乐 - 宁静的早晨',
+                likes: 1234,
+                comments: 56,
+                shares: 12
+            },
+            {
+                id: 2,
+                src: 'https://assets.codepen.io/3364143/701.mp4',
+                poster: 'https://images.unsplash.com/photo-1549490349-8643362247b5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+                description: '城市夜景延时摄影 #城市 #夜景',
+                music: '电子音乐 - 都市节奏',
+                likes: 5678,
+                comments: 123,
+                shares: 45
+            },
+            {
+                id: 3,
+                src: 'https://assets.codepen.io/3364143/703.mp4',
+                poster: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+                description: '创意美食制作过程 #美食 #创意',
+                music: '爵士乐 - 悠闲时光',
+                likes: 890,
+                comments: 34,
+                shares: 9
+            }
+        ];
+
+        class ShortVideoApp {
+            constructor() {
+                this.videos = videos;
+                this.currentIndex = 0;
+                this.isSwiping = false;
+                this.startY = 0;
+                this.currentY = 0;
+                this.userVideos = []; // 存储用户发布的视频
+                
+                this.init();
+            }
+            
+            init() {
+                this.renderVideos();
+                this.bindEvents();
+                this.playCurrentVideo();
+                this.startProgressBar();
+                this.initPublishPage();
+            }
+            
+            renderVideos() {
+                const container = document.getElementById('videoContainer');
+                container.innerHTML = '';
+                
+                // 合并默认视频和用户发布的视频
+                const allVideos = [...this.userVideos, ...this.videos];
+                
+                allVideos.forEach((video, index) => {
+                    const videoItem = document.createElement('div');
+                    videoItem.className = 'video-item';
+                    videoItem.style.transform = `translateY(${index * 100}%)`;
+                    
+                    videoItem.innerHTML = `
+                        <video 
+                            src="${video.src}" 
+                            poster="${video.poster}"
+                            preload="metadata"
+                            loop
+                            ${index === 0 ? 'autoplay' : ''}
+                        ></video>
+                        
+                        <div class="video-info">
+                            <div class="video-description">${video.description}</div>
+                            <div class="music-info">
+                                <span class="music-icon">🎵</span>
+                                <span>${video.music}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <div class="action-button like" data-id="${video.id}">
+                                <div class="action-icon">❤️</div>
+                                <div class="action-count">${this.formatCount(video.likes)}</div>
+                            </div>
+                            <div class="action-button comment">
+                                <div class="action-icon">💬</div>
+                                <div class="action-count">${this.formatCount(video.comments)}</div>
+                            </div>
+                            <div class="action-button share">
+                                <div class="action-icon">↗️</div>
+                                <div class="action-count">${this.formatCount(video.shares)}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(videoItem);
+                });
+                
+                // 绑定点赞事件
+                document.querySelectorAll('.like').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.handleLike(button);
+                    });
+                });
+                
+                // 绑定视频点击事件（播放/暂停）
+                document.querySelectorAll('video').forEach(video => {
+                    video.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.togglePlayPause(video);
+                    });
+                });
+            }
+            
+            bindEvents() {
+                const container = document.getElementById('videoContainer');
+                
+                // 触摸事件
+                container.addEventListener('touchstart', (e) => {
+                    this.isSwiping = true;
+                    this.startY = e.touches[0].clientY;
+                    this.currentY = this.startY;
+                });
+                
+                container.addEventListener('touchmove', (e) => {
+                    if (!this.isSwiping) return;
+                    
+                    this.currentY = e.touches[0].clientY;
+                    const diff = this.currentY - this.startY;
+                    
+                    // 限制滑动范围
+                    const allVideosCount = this.videos.length + this.userVideos.length;
+                    if (this.currentIndex === 0 && diff > 0) return;
+                    if (this.currentIndex === allVideosCount - 1 && diff < 0) return;
+                    
+                    container.style.transform = `translateY(calc(-${this.currentIndex * 100}% + ${diff}px))`;
+                });
+                
+                container.addEventListener('touchend', () => {
+                    if (!this.isSwiping) return;
+                    
+                    this.isSwiping = false;
+                    const diff = this.currentY - this.startY;
+                    
+                    // 滑动阈值判断
+                    const allVideosCount = this.videos.length + this.userVideos.length;
+                    if (Math.abs(diff) > 100) {
+                        if (diff > 0 && this.currentIndex > 0) {
+                            // 向上滑动
+                            this.currentIndex--;
+                        } else if (diff < 0 && this.currentIndex < allVideosCount - 1) {
+                            // 向下滑动
+                            this.currentIndex++;
+                        }
+                    }
+                    
+                    // 应用动画
+                    container.style.transform = `translateY(-${this.currentIndex * 100}%)`;
+                    
+                    // 切换视频播放
+                    this.playCurrentVideo();
+                });
+                
+                // 鼠标滚轮事件
+                container.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    
+                    const allVideosCount = this.videos.length + this.userVideos.length;
+                    
+                    if (e.deltaY > 0 && this.currentIndex < allVideosCount - 1) {
+                        // 向下滚动
+                        this.currentIndex++;
+                    } else if (e.deltaY < 0 && this.currentIndex > 0) {
+                        // 向上滚动
+                        this.currentIndex--;
+                    }
+                    
+                    container.style.transform = `translateY(-${this.currentIndex * 100}%)`;
+                    this.playCurrentVideo();
+                });
+                
+                // 点击屏幕暂停/播放
+                container.addEventListener('click', () => {
+                    const currentVideo = document.querySelectorAll('video')[this.currentIndex];
+                    this.togglePlayPause(currentVideo);
+                });
+            }
+            
+            initPublishPage() {
+                const publishBtn = document.getElementById('publishBtn');
+                const publishPage = document.getElementById('publishPage');
+                const publishClose = document.getElementById('publishClose');
+                const publishSubmit = document.getElementById('publishSubmit');
+                const videoUploadArea = document.getElementById('videoUploadArea');
+                const videoFileInput = document.getElementById('videoFileInput');
+                const videoPreview = document.getElementById('videoPreview');
+                
+                // 打开发布页面
+                publishBtn.addEventListener('click', () => {
+                    publishPage.style.display = 'flex';
+                    this.pauseCurrentVideo();
+                });
+                
+                // 关闭发布页面
+                publishClose.addEventListener('click', () => {
+                    publishPage.style.display = 'none';
+                    this.resetPublishForm();
+                });
+                
+                // 提交发布
+                publishSubmit.addEventListener('click', () => {
+                    this.publishVideo();
+                });
+                
+                // 视频上传区域点击事件
+                videoUploadArea.addEventListener('click', () => {
+                    videoFileInput.click();
+                });
+                
+                // 视频文件选择事件
+                videoFileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const videoURL = URL.createObjectURL(file);
+                        videoPreview.src = videoURL;
+                        videoPreview.style.display = 'block';
+                        
+                        // 隐藏上传提示
+                        videoUploadArea.querySelector('.video-upload-icon').style.display = 'none';
+                        videoUploadArea.querySelector('.video-upload-text').style.display = 'none';
+                    }
+                });
+            }
+            
+            publishVideo() {
+                const videoFileInput = document.getElementById('videoFileInput');
+                const videoDescription = document.getElementById('videoDescription');
+                const videoMusic = document.getElementById('videoMusic');
+                const uploadProgress = document.getElementById('uploadProgress');
+                const progressFill = document.getElementById('progressFill');
+                
+                // 验证表单
+                if (!videoFileInput.files[0]) {
+                    this.showToast('请选择视频文件');
+                    return;
+                }
+                
+                if (!videoDescription.value.trim()) {
+                    this.showToast('请输入视频描述');
+                    return;
+                }
+                
+                // 显示上传进度
+                uploadProgress.style.display = 'block';
+                
+                // 模拟上传过程
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5;
+                    progressFill.style.width = `${progress}%`;
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        
+                        // 创建新的视频对象
+                        const newVideo = {
+                            id: Date.now(), // 使用时间戳作为ID
+                            src: URL.createObjectURL(videoFileInput.files[0]),
+                            poster: '', // 在实际应用中，可以从视频中提取一帧作为封面
+                            description: videoDescription.value,
+                            music: videoMusic.value,
+                            likes: 0,
+                            comments: 0,
+                            shares: 0
+                        };
+                        
+                        // 添加到用户视频列表
+                        this.userVideos.unshift(newVideo);
+                        
+                        // 重置表单
+                        this.resetPublishForm();
+                        
+                        // 关闭发布页面
+                        document.getElementById('publishPage').style.display = 'none';
+                        
+                        // 重新渲染视频列表
+                        this.renderVideos();
+                        
+                        // 切换到新发布的视频
+                        this.currentIndex = 0;
+                        document.getElementById('videoContainer').style.transform = 'translateY(0%)';
+                        this.playCurrentVideo();
+                        
+                        // 显示成功提示
+                        this.showToast('发布成功！');
+                    }
+                }, 100);
+            }
+            
+            resetPublishForm() {
+                document.getElementById('videoFileInput').value = '';
+                document.getElementById('videoPreview').src = '';
+                document.getElementById('videoPreview').style.display = 'none';
+                document.getElementById('videoDescription').value = '';
+                document.getElementById('videoMusic').selectedIndex = 0;
+                document.getElementById('uploadProgress').style.display = 'none';
+                document.getElementById('progressFill').style.width = '0%';
+                
+                // 显示上传提示
+                document.querySelector('.video-upload-icon').style.display = 'block';
+                document.querySelector('.video-upload-text').style.display = 'block';
+            }
+            
+            showToast(message) {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.style.display = 'block';
+                
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 2000);
+            }
+            
+            playCurrentVideo() {
+                // 暂停所有视频
+                document.querySelectorAll('video').forEach(video => {
+                    video.pause();
+                });
+                
+                // 播放当前视频
+                const currentVideo = document.querySelectorAll('video')[this.currentIndex];
+                if (currentVideo) {
+                    currentVideo.play().catch(e => {
+                        console.log('自动播放被阻止，需要用户交互');
+                    });
+                }
+                
+                // 重置进度条
+                this.resetProgressBar();
+            }
+            
+            pauseCurrentVideo() {
+                const currentVideo = document.querySelectorAll('video')[this.currentIndex];
+                if (currentVideo) {
+                    currentVideo.pause();
+                }
+            }
+            
+            togglePlayPause(video) {
+                if (video.paused) {
+                    video.play();
+                    document.getElementById('playPause').style.display = 'none';
+                } else {
+                    video.pause();
+                    document.getElementById('playPause').style.display = 'flex';
+                }
+            }
+            
+            startProgressBar() {
+                setInterval(() => {
+                    const currentVideo = document.querySelectorAll('video')[this.currentIndex];
+                    if (currentVideo && !currentVideo.paused) {
+                        const progress = (currentVideo.currentTime / currentVideo.duration) * 100;
+                        document.getElementById('progress').style.width = `${progress}%`;
+                    }
+                }, 100);
+            }
+            
+            resetProgressBar() {
+                document.getElementById('progress').style.width = '0%';
+            }
+            
+            handleLike(button) {
+                button.classList.toggle('active');
+                
+                const countElement = button.querySelector('.action-count');
+                let count = parseInt(countElement.textContent);
+                
+                if (button.classList.contains('active')) {
+                    count++;
+                } else {
+                    count--;
+                }
+                
+                countElement.textContent = this.formatCount(count);
+            }
+            
+            formatCount(count) {
+                if (count >= 10000) {
+                    return (count / 10000).toFixed(1) + 'w';
+                } else if (count >= 1000) {
+                    return (count / 1000).toFixed(1) + 'k';
+                }
+                return count.toString();
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new ShortVideoApp();
+        });
+    </script>
+</body>
+</html>
